@@ -1,6 +1,6 @@
 # OWRX Backend
 
-Backend reimplementation of OpenWebRX
+Backend reimplementation of OpenWebRX+
 
 ## What is this project?
 

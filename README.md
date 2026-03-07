@@ -45,7 +45,7 @@ The goals of this project are as follows:
 - Free tuning (with and without a magic key)
 - Integration with [receiverbook](https://www.receiverbook.de/) and other receiver listings
 
-## What probably aren't planned
+## What isn't planned
 Things that may be added at some point, but generally are of low priority.
 - Admin panel
 - Files viewer

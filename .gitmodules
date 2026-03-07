@@ -1,0 +1,3 @@
+[submodule "src/main/resources/owrx"]
+	path = src/main/resources/owrx
+	url = https://git.raspberry.local/Defective/openwebrx.git

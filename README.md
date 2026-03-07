@@ -60,6 +60,8 @@ Things that may be added at some point, but generally are of low priority.
 - Background decoding
 
 # Contributing
+See any issues? Go ahead, report them [here](https://github.com/Defective4/owrx-backend/issues)!  
+Pull requests are also welcome.
 
 # Support
 If you want to support my work, consider buying me a coffee at [ko-fi.com!](https://ko-fi.com/defective4_)

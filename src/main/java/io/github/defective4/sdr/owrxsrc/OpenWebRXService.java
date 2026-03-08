@@ -3,6 +3,7 @@ package io.github.defective4.sdr.owrxsrc;
 import static io.javalin.apibuilder.ApiBuilder.*;
 import static io.javalin.http.HttpStatus.*;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,13 +13,20 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.simple.SimpleLoggerFactory;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import io.github.defective4.sdr.owrxsrc.model.ServiceDetails;
+import io.github.defective4.sdr.owrxsrc.model.client.message.ClientMessageType;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ServerChatMessage;
 import io.github.defective4.sdr.owrxsrc.session.ClientSession;
 import io.github.defective4.sdr.owrxsrc.session.ClientSessionManager;
 import io.github.defective4.sdr.owrxsrc.template.HTMLTemplateManager;
 import io.github.defective4.sdr.owrxsrc.template.HTMLTemplateRenderer;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.json.JavalinGson;
 import io.javalin.websocket.WsMessageContext;
 
 public class OpenWebRXService {
@@ -33,6 +41,8 @@ public class OpenWebRXService {
 
     private final AssetCompiler compiler;
 
+    private final Gson gson = new Gson();
+    private final MessageHandler handler = new MessageHandler(this);
     private final Javalin javalin;
     private final Logger mainLogger = new SimpleLoggerFactory().getLogger("owrx-backend");
     private final ServiceDetails serviceDetails;
@@ -43,6 +53,7 @@ public class OpenWebRXService {
     public OpenWebRXService(ServiceDetails serviceDetails) throws IOException {
         compiler = new AssetCompiler(OWRX_RES);
         javalin = Javalin.create(cfg -> {
+            cfg.jsonMapper(new JavalinGson());
             cfg.fileRenderer(new HTMLTemplateRenderer(templateManager));
             cfg.staticFiles.add(scfg -> {
                 scfg.location = Location.CLASSPATH;
@@ -97,7 +108,24 @@ public class OpenWebRXService {
                             }
                             ctx.session.disconnect();
                         } else {
-                            // TODO
+                            try {
+                                JsonObject obj = JsonParser.parseString(ctx.message()).getAsJsonObject();
+                                String type = obj.get("type").getAsString();
+                                Record message;
+                                try {
+                                    message = ctx.messageAsClass(
+                                            ClientMessageType.valueOf(type.toUpperCase()).getMessageClass());
+                                } catch (IllegalArgumentException e) {
+                                    // TODO debug logging
+                                    message = null;
+                                }
+                                if (message != null) {
+                                    handler.handleMessage(session, message);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                ctx.session.disconnect();
+                            }
                         }
                     });
                     wcfg.onConnect(ctx -> sessionManager.add(ctx.sessionId(),
@@ -106,6 +134,11 @@ public class OpenWebRXService {
             });
         });
         this.serviceDetails = serviceDetails;
+    }
+
+    public void broadcastChatMessage(String from, String text, Color color) {
+        sessionManager.broadcastMessage(new ServerChatMessage(from, text,
+                String.format("#%s%s%s", toHex(color.getRed()), toHex(color.getGreen()), toHex(color.getBlue()))));
     }
 
     public Javalin start(int port) {
@@ -125,6 +158,13 @@ public class OpenWebRXService {
         merged[0] = ctx.session.getRemoteAddress().toString();
         System.arraycopy(args, 0, merged, 1, args.length);
         return merged;
+    }
+
+    private static String toHex(int i) {
+        String hex = Integer.toHexString(i);
+        if (hex.length() > 2) hex = hex.substring(0, 2);
+        if (hex.length() < 2) hex = "0" + hex;
+        return hex;
     }
 
 }

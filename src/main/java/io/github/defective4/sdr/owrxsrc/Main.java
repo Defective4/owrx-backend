@@ -1,11 +1,13 @@
 package io.github.defective4.sdr.owrxsrc;
 
-import io.github.defective4.sdr.owrxsrc.model.ServiceDetails;
+import io.github.defective4.sdr.owrxsrc.model.GPS;
+import io.github.defective4.sdr.owrxsrc.model.ReceiverDetails;
 
 public class Main {
     public static void main(String[] args) {
         try {
-            ServiceDetails details = new ServiceDetails("/", "OWRX Backend Service", "My room", "aa00", 200, "-osm", 0, null, "An example photo", "An example description");
+            ReceiverDetails details = new ReceiverDetails("OWRX Backend", "", 0, 200, 0, "", "My room", new GPS(0, 0),
+                    "policy", "AA00");
             new OpenWebRXService(details).start(8073);
         } catch (Exception e) {
             e.printStackTrace();

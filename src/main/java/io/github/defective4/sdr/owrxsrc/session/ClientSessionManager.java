@@ -40,4 +40,8 @@ public class ClientSessionManager {
         }
     }
 
+    public int size() {
+        return map.size();
+    }
+
 }

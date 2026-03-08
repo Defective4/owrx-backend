@@ -17,8 +17,11 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import io.github.defective4.sdr.owrxsrc.model.ReceiverDetails;
 import io.github.defective4.sdr.owrxsrc.model.ServiceDetails;
 import io.github.defective4.sdr.owrxsrc.model.client.message.ClientMessageType;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ClientCountMessage;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ReceiverDetailsMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ServerChatMessage;
 import io.github.defective4.sdr.owrxsrc.session.ClientSession;
 import io.github.defective4.sdr.owrxsrc.session.ClientSessionManager;
@@ -47,12 +50,12 @@ public class OpenWebRXService {
     private final Logger mainLogger = new SimpleLoggerFactory().getLogger("owrx-backend");
     private final String[] motd = { "Welcome to OWRX Backend!",
             "Check the code at https://github.com/Defective4/owrx-backend" };
-    private final ServiceDetails serviceDetails;
+    private final ReceiverDetails recvDetails;
     private final ClientSessionManager sessionManager = new ClientSessionManager();
     private final HTMLTemplateManager templateManager = new HTMLTemplateManager();
     private final String version = "v1.2.108"; // TODO load externally
 
-    public OpenWebRXService(ServiceDetails serviceDetails) throws IOException {
+    public OpenWebRXService(ReceiverDetails recvDetails) throws IOException {
         compiler = new AssetCompiler(OWRX_RES);
         javalin = Javalin.create(cfg -> {
             cfg.jsonMapper(new JavalinGson());
@@ -63,8 +66,9 @@ public class OpenWebRXService {
                 scfg.hostedPath = "/static";
             });
             cfg.router.apiBuilder(() -> {
-                get("/", ctx -> ctx.render(OWRX_RES + "/index.html", Map.of("header",
-                        templateManager.renderTemplate(OWRX_RES + "/include/header.include.html", serviceDetails))));
+                get("/", ctx -> ctx.render(OWRX_RES + "/index.html",
+                        Map.of("header", templateManager.renderTemplate(OWRX_RES + "/include/header.include.html",
+                                new ServiceDetails(recvDetails, "/")))));
                 get("/compiled/{asset}", ctx -> {
                     Optional<String> asset = compiler.getCompiledAsset(ctx.pathParam("asset"));
                     if (asset.isPresent()) {
@@ -74,8 +78,14 @@ public class OpenWebRXService {
                     }
                 });
                 ws("/ws/", wcfg -> {
-                    wcfg.onClose(ctx -> sessionManager.remove(ctx.sessionId()));
-                    wcfg.onError(ctx -> sessionManager.remove(ctx.sessionId()));
+                    wcfg.onClose(ctx -> {
+                        sessionManager.remove(ctx.sessionId());
+                        updateClientCount();
+                    });
+                    wcfg.onError(ctx -> {
+                        sessionManager.remove(ctx.sessionId());
+                        updateClientCount();
+                    });
                     wcfg.onMessage(ctx -> {
                         Optional<ClientSession> sesOptional = sessionManager.get(ctx.sessionId());
                         if (!sesOptional.isPresent()) {
@@ -103,7 +113,10 @@ public class OpenWebRXService {
                                     ctx.send(String.format(HS_SERVER_HEADER, HS_BRAND, version));
                                     log(ctx, "Connection received. Client ID: {}, Client Type: {}", clientId, type);
                                     for (String line : motd) {
-                                        session.sendMessage(new ServerChatMessage("owrx-backend", line, toHex(Color.green)));
+                                        session.sendMessage(
+                                                new ServerChatMessage("owrx-backend", line, toHex(Color.green)));
+                                        session.sendMessage(new ReceiverDetailsMessage(recvDetails));
+                                        updateClientCount();
                                     }
                                     return;
                                 }
@@ -138,7 +151,7 @@ public class OpenWebRXService {
                 });
             });
         });
-        this.serviceDetails = serviceDetails;
+        this.recvDetails = recvDetails;
     }
 
     public void broadcastChatMessage(String from, String text, Color color) {
@@ -155,6 +168,10 @@ public class OpenWebRXService {
 
     private void log(WsMessageContext ctx, String message, String... args) {
         mainLogger.info(String.format("[{}] %s", message), mergeArguments(ctx, args));
+    }
+
+    private void updateClientCount() {
+        sessionManager.broadcastMessage(new ClientCountMessage(sessionManager.size()));
     }
 
     private void warn(WsMessageContext ctx, String message, String... args) {

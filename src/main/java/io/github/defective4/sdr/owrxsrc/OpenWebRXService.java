@@ -18,9 +18,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import io.github.defective4.sdr.owrxsrc.model.ReceiverDetails;
+import io.github.defective4.sdr.owrxsrc.model.ServerConfig;
 import io.github.defective4.sdr.owrxsrc.model.ServiceDetails;
 import io.github.defective4.sdr.owrxsrc.model.client.message.ClientMessageType;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ClientCountMessage;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ConfigMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ReceiverDetailsMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ServerChatMessage;
 import io.github.defective4.sdr.owrxsrc.session.ClientSession;
@@ -45,6 +47,7 @@ public class OpenWebRXService {
     private static final String OWRX_RES = "/owrx/htdocs";
 
     private final AssetCompiler compiler;
+    private final OWRXConfiguration config;
     private final MessageHandler handler = new MessageHandler(this);
     private final Javalin javalin;
     private final Logger mainLogger = new SimpleLoggerFactory().getLogger("owrx-backend");
@@ -55,7 +58,7 @@ public class OpenWebRXService {
     private final HTMLTemplateManager templateManager = new HTMLTemplateManager();
     private final String version = "v1.2.108"; // TODO load externally
 
-    public OpenWebRXService(ReceiverDetails recvDetails) throws IOException {
+    public OpenWebRXService(ReceiverDetails recvDetails, OWRXConfiguration config) throws IOException {
         compiler = new AssetCompiler(OWRX_RES);
         javalin = Javalin.create(cfg -> {
             cfg.jsonMapper(new JavalinGson());
@@ -115,8 +118,9 @@ public class OpenWebRXService {
                                     for (String line : motd) {
                                         session.sendMessage(
                                                 new ServerChatMessage("owrx-backend", line, toHex(Color.green)));
-                                        session.sendMessage(new ReceiverDetailsMessage(recvDetails));
                                     }
+                                    session.sendMessage(new ReceiverDetailsMessage(recvDetails));
+                                    session.sendMessage(new ConfigMessage(new ServerConfig(config)));
                                     updateClientCount();
                                     return;
                                 }
@@ -152,6 +156,7 @@ public class OpenWebRXService {
             });
         });
         this.recvDetails = recvDetails;
+        this.config = config;
     }
 
     public void broadcastChatMessage(String from, String text, Color color) {

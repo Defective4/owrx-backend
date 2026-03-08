@@ -5,13 +5,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import com.google.gson.Gson;
-
 import io.github.defective4.sdr.owrxsrc.model.server.message.ServerMessage;
 
 public class ClientSessionManager {
-    private final Gson gson = new Gson();
-
     private final Map<String, ClientSession> map = new HashMap<>();
 
     public void add(String key, ClientSession value) {
@@ -22,10 +18,9 @@ public class ClientSessionManager {
 
     public void broadcastMessage(ServerMessage message) {
         synchronized (map) {
-            String json = gson.toJson(message);
             map.values().forEach(client -> {
                 try {
-                    client.getWSSession().getRemote().sendString(json);
+                    client.sendMessage(message);
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

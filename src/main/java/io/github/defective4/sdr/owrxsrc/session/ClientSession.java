@@ -1,10 +1,14 @@
 package io.github.defective4.sdr.owrxsrc.session;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.jetty.websocket.api.Session;
+
+import io.github.defective4.sdr.owrxsrc.OpenWebRXService;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ServerMessage;
 
 public class ClientSession {
     private String clientId, clientType;
@@ -39,6 +43,10 @@ public class ClientSession {
 
     public boolean hasHandshakeCompleted() {
         return clientId != null && clientType != null;
+    }
+
+    public void sendMessage(ServerMessage message) throws IOException {
+        session.getRemote().sendString(OpenWebRXService.GSON.toJson(message));
     }
 
     public void setClientId(String clientId) {

@@ -31,6 +31,8 @@ import io.javalin.websocket.WsMessageContext;
 
 public class OpenWebRXService {
 
+    public static final Gson GSON = new Gson();
+
     private static final String HS_BRAND = "openwebrx";
 
     private static final String HS_CLIENT_HEADER = "SERVER DE CLIENT ";
@@ -40,11 +42,11 @@ public class OpenWebRXService {
     private static final String OWRX_RES = "/owrx/htdocs";
 
     private final AssetCompiler compiler;
-
-    private final Gson gson = new Gson();
     private final MessageHandler handler = new MessageHandler(this);
     private final Javalin javalin;
     private final Logger mainLogger = new SimpleLoggerFactory().getLogger("owrx-backend");
+    private final String[] motd = { "Welcome to OWRX Backend!",
+            "Check the code at https://github.com/Defective4/owrx-backend" };
     private final ServiceDetails serviceDetails;
     private final ClientSessionManager sessionManager = new ClientSessionManager();
     private final HTMLTemplateManager templateManager = new HTMLTemplateManager();
@@ -100,6 +102,9 @@ public class OpenWebRXService {
                                     session.setClientType(type);
                                     ctx.send(String.format(HS_SERVER_HEADER, HS_BRAND, version));
                                     log(ctx, "Connection received. Client ID: {}, Client Type: {}", clientId, type);
+                                    for (String line : motd) {
+                                        session.sendMessage(new ServerChatMessage("owrx-backend", line, toHex(Color.green)));
+                                    }
                                     return;
                                 }
                                 warn(ctx, "Invalid client disconnected: Incomplete header received");
@@ -137,8 +142,7 @@ public class OpenWebRXService {
     }
 
     public void broadcastChatMessage(String from, String text, Color color) {
-        sessionManager.broadcastMessage(new ServerChatMessage(from, text,
-                String.format("#%s%s%s", toHex(color.getRed()), toHex(color.getGreen()), toHex(color.getBlue()))));
+        sessionManager.broadcastMessage(new ServerChatMessage(from, text, toHex(color)));
     }
 
     public Javalin start(int port) {
@@ -162,6 +166,10 @@ public class OpenWebRXService {
         merged[0] = ctx.session.getRemoteAddress().toString();
         System.arraycopy(args, 0, merged, 1, args.length);
         return merged;
+    }
+
+    private static String toHex(Color color) {
+        return String.format("#%s%s%s", toHex(color.getRed()), toHex(color.getGreen()), toHex(color.getBlue()));
     }
 
     private static String toHex(int i) {

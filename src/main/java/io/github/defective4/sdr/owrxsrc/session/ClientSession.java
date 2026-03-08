@@ -8,6 +8,7 @@ import java.util.Map;
 import org.eclipse.jetty.websocket.api.Session;
 
 import io.github.defective4.sdr.owrxsrc.OpenWebRXService;
+import io.github.defective4.sdr.owrxsrc.model.server.message.DisconnectMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ServerMessage;
 
 public class ClientSession {
@@ -19,6 +20,11 @@ public class ClientSession {
     public ClientSession(String id, Session session) {
         this.id = id;
         this.session = session;
+    }
+
+    public void disconnect(String reason) throws IOException {
+        sendMessage(new DisconnectMessage(reason));
+        session.close();
     }
 
     public String getClientId() {

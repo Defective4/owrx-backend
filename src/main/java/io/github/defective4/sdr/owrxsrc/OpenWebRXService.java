@@ -116,8 +116,8 @@ public class OpenWebRXService {
                                         session.sendMessage(
                                                 new ServerChatMessage("owrx-backend", line, toHex(Color.green)));
                                         session.sendMessage(new ReceiverDetailsMessage(recvDetails));
-                                        updateClientCount();
                                     }
+                                    updateClientCount();
                                     return;
                                 }
                                 warn(ctx, "Invalid client disconnected: Incomplete header received");

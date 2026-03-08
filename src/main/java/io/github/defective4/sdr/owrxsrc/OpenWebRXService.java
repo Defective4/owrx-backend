@@ -116,7 +116,7 @@ public class OpenWebRXService {
                                     message = ctx.messageAsClass(
                                             ClientMessageType.valueOf(type.toUpperCase()).getMessageClass());
                                 } catch (IllegalArgumentException e) {
-                                    // TODO debug logging
+                                    log(ctx, "Unknown message received: {}", obj.toString());
                                     message = null;
                                 }
                                 if (message != null) {
@@ -143,6 +143,10 @@ public class OpenWebRXService {
 
     public Javalin start(int port) {
         return javalin.start(port);
+    }
+
+    private void debug(WsMessageContext ctx, String message, String... args) {
+        mainLogger.debug(String.format("[{}] %s", message), mergeArguments(ctx, args));
     }
 
     private void log(WsMessageContext ctx, String message, String... args) {

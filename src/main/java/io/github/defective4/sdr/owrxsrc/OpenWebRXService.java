@@ -26,7 +26,7 @@ import io.github.defective4.sdr.owrxsrc.model.server.message.ClientCountMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ConfigMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.FeaturesMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ReceiverDetailsMessage;
-import io.github.defective4.sdr.owrxsrc.model.server.message.ServerChatMessage;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ChatMessage;
 import io.github.defective4.sdr.owrxsrc.session.ClientSession;
 import io.github.defective4.sdr.owrxsrc.session.ClientSessionManager;
 import io.github.defective4.sdr.owrxsrc.template.HTMLTemplateManager;
@@ -122,7 +122,7 @@ public class OpenWebRXService {
                                     session.sendMessage(new FeaturesMessage(new Features(true)));
                                     for (String line : motd) {
                                         session.sendMessage(
-                                                new ServerChatMessage("owrx-backend", line, toHex(Color.green)));
+                                                new ChatMessage("owrx-backend", line, toHex(Color.green)));
                                     }
                                     updateClientCount();
                                     return;
@@ -163,7 +163,7 @@ public class OpenWebRXService {
     }
 
     public void broadcastChatMessage(String from, String text, Color color) {
-        sessionManager.broadcastMessage(new ServerChatMessage(from, text, toHex(color)));
+        sessionManager.broadcastMessage(new ChatMessage(from, text, toHex(color)));
     }
 
     public Javalin start(int port) {

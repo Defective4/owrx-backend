@@ -23,6 +23,7 @@ This project aims to implement most of [OpenWebRX+](https://github.com/luarvique
 | ❌    | Won't implement                              |
 
 The goals of this project are as follows:
+
 - Implement the protocol used between OpenWebRX+'s frontend and backend.
 - ✅ Seamlessly serve OpenWebRX+'s __unmodified__ frontend (cloned directly from [owrx's GitHub repository](https://github.com/luarvique/openwebrx), found in the [/htdocs](https://github.com/luarvique/openwebrx/tree/master/htdocs) directory)
 - Implement basic analog modes using CSDR or GnuRadio (TBD). This includes:
@@ -32,7 +33,7 @@ The goals of this project are as follows:
   - CW
   - RAW
 - Implement UI elements, such as:
-  - Chat
+  - ✅ Chat
   - Client count (and limit)
   - ❓ CPU usage and temperature
 - Support adding bookmarks, dial frequencies, and bandplan
@@ -46,7 +47,9 @@ The goals of this project are as follows:
 - Integration with [receiverbook](https://www.receiverbook.de/) and other receiver listings
 
 ## What isn't planned
+
 Things that may be added at some point, but generally are of low priority.
+
 - Admin panel
 - Files viewer
 - Map view
@@ -60,8 +63,13 @@ Things that may be added at some point, but generally are of low priority.
 - Background decoding
 
 # Contributing
+
 See any issues? Go ahead, report them [here](https://github.com/Defective4/owrx-backend/issues)!  
 Pull requests are also welcome.
 
 # Support
-If you want to support my work, consider buying me a coffee at [ko-fi.com!](https://ko-fi.com/defective4_)
+
+If you want to support my work, consider buying me a coffee!  
+
+
+<a href='https://ko-fi.com/U7U01VOM9P' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi4.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>

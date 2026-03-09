@@ -7,6 +7,7 @@ import java.awt.Color;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,15 +19,18 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import io.github.defective4.sdr.owrxsrc.model.Features;
+import io.github.defective4.sdr.owrxsrc.model.Mode;
+import io.github.defective4.sdr.owrxsrc.model.Modulation;
 import io.github.defective4.sdr.owrxsrc.model.ReceiverDetails;
 import io.github.defective4.sdr.owrxsrc.model.ServerConfig;
 import io.github.defective4.sdr.owrxsrc.model.ServiceDetails;
 import io.github.defective4.sdr.owrxsrc.model.client.message.ClientMessageType;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ChatMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ClientCountMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ConfigMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.FeaturesMessage;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ModesMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ReceiverDetailsMessage;
-import io.github.defective4.sdr.owrxsrc.model.server.message.ChatMessage;
 import io.github.defective4.sdr.owrxsrc.session.ClientSession;
 import io.github.defective4.sdr.owrxsrc.session.ClientSessionManager;
 import io.github.defective4.sdr.owrxsrc.template.HTMLTemplateManager;
@@ -120,9 +124,9 @@ public class OpenWebRXService {
                                     session.sendMessage(new ReceiverDetailsMessage(recvDetails));
                                     session.sendMessage(new ConfigMessage(new ServerConfig(config)));
                                     session.sendMessage(new FeaturesMessage(new Features(true)));
+                                    session.sendMessage(new ModesMessage(getAvailableModes()));
                                     for (String line : motd) {
-                                        session.sendMessage(
-                                                new ChatMessage("owrx-backend", line, toHex(Color.green)));
+                                        session.sendMessage(new ChatMessage("owrx-backend", line, toHex(Color.green)));
                                     }
                                     updateClientCount();
                                     return;
@@ -164,6 +168,14 @@ public class OpenWebRXService {
 
     public void broadcastChatMessage(String from, String text, Color color) {
         sessionManager.broadcastMessage(new ChatMessage(from, text, toHex(color)));
+    }
+
+    public Mode[] getAvailableModes() {
+        return getAvailableModulations().stream().map(mod -> new Mode(mod)).toArray(Mode[]::new);
+    }
+
+    public List<Modulation> getAvailableModulations() {
+        return Arrays.asList(Modulation.values());
     }
 
     public Javalin start(int port) {

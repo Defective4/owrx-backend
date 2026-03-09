@@ -1,6 +1,7 @@
 package io.github.defective4.sdr.owrxsrc;
 
 import io.github.defective4.sdr.owrxsrc.model.GPS;
+import io.github.defective4.sdr.owrxsrc.model.Levels;
 
 public record OWRXConfiguration(int maxClients,
 //         boolean allowRecording,
@@ -12,6 +13,7 @@ public record OWRXConfiguration(int maxClients,
 //         String flightURL,
         boolean allowCenterFrequencyChanges,
 //         String modesURL,
-        String audioCompression, GPS gps, int[] waterfallColors) {
+        String audioCompression, GPS gps, int[] waterfallColors,
+        Levels waterfallLevels) {
 
 }

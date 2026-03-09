@@ -1,11 +1,9 @@
 package io.github.defective4.sdr.owrxsrc.model.server.message;
 
-import io.github.defective4.sdr.owrxsrc.model.ServerConfig;
-
 public class ConfigMessage extends ServerMessage {
-    private final ServerConfig value;
+    private final Record value;
 
-    public ConfigMessage(ServerConfig value) {
+    public ConfigMessage(Record value) {
         super("config");
         this.value = value;
     }

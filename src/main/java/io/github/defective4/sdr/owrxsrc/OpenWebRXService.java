@@ -17,12 +17,14 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import io.github.defective4.sdr.owrxsrc.model.Features;
 import io.github.defective4.sdr.owrxsrc.model.ReceiverDetails;
 import io.github.defective4.sdr.owrxsrc.model.ServerConfig;
 import io.github.defective4.sdr.owrxsrc.model.ServiceDetails;
 import io.github.defective4.sdr.owrxsrc.model.client.message.ClientMessageType;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ClientCountMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ConfigMessage;
+import io.github.defective4.sdr.owrxsrc.model.server.message.FeaturesMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ReceiverDetailsMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ServerChatMessage;
 import io.github.defective4.sdr.owrxsrc.session.ClientSession;
@@ -115,12 +117,13 @@ public class OpenWebRXService {
                                     session.setClientType(type);
                                     ctx.send(String.format(HS_SERVER_HEADER, HS_BRAND, version));
                                     log(ctx, "Connection received. Client ID: {}, Client Type: {}", clientId, type);
+                                    session.sendMessage(new ReceiverDetailsMessage(recvDetails));
+                                    session.sendMessage(new ConfigMessage(new ServerConfig(config)));
+                                    session.sendMessage(new FeaturesMessage(new Features(true)));
                                     for (String line : motd) {
                                         session.sendMessage(
                                                 new ServerChatMessage("owrx-backend", line, toHex(Color.green)));
                                     }
-                                    session.sendMessage(new ReceiverDetailsMessage(recvDetails));
-                                    session.sendMessage(new ConfigMessage(new ServerConfig(config)));
                                     updateClientCount();
                                     return;
                                 }

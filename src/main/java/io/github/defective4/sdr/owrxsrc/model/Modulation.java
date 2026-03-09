@@ -5,11 +5,11 @@ public enum Modulation {
 
     private final String mod;
 
-    public String getMod() {
-        return mod;
-    }
-
     private Modulation(String mod) {
         this.mod = mod;
+    }
+
+    public String getMod() {
+        return mod;
     }
 }

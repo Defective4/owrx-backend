@@ -16,6 +16,21 @@ public class ClientSessionManager {
         }
     }
 
+    public void broadcastData(byte id, byte[] data) {
+        synchronized (map) {
+            map.values().forEach(client -> {
+                try {
+                    byte[] combined = new byte[data.length + 1];
+                    System.arraycopy(data, 0, combined, 1, data.length);
+                    combined[0] = id;
+                    client.sendData(combined);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+        }
+    }
+
     public void broadcastMessage(ServerMessage message) {
         synchronized (map) {
             map.values().forEach(client -> {

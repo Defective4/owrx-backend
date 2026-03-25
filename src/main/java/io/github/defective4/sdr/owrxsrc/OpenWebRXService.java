@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.UUID;
 
 import org.slf4j.Logger;
@@ -26,6 +28,7 @@ import io.github.defective4.sdr.owrxsrc.model.ReceiverDetails;
 import io.github.defective4.sdr.owrxsrc.model.ServiceDetails;
 import io.github.defective4.sdr.owrxsrc.model.client.message.ClientMessageType;
 import io.github.defective4.sdr.owrxsrc.model.config.PrimaryServerConfig;
+import io.github.defective4.sdr.owrxsrc.model.config.SecondaryServerConfig;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ChatMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ClientCountMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ConfigMessage;
@@ -33,6 +36,7 @@ import io.github.defective4.sdr.owrxsrc.model.server.message.FeaturesMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ModesMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ProfilesMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ReceiverDetailsMessage;
+import io.github.defective4.sdr.owrxsrc.model.server.message.SecondaryConfigMessage;
 import io.github.defective4.sdr.owrxsrc.sdr.Receiver;
 import io.github.defective4.sdr.owrxsrc.sdr.ReceiverBand;
 import io.github.defective4.sdr.owrxsrc.sdr.Receivers;
@@ -130,6 +134,7 @@ public class OpenWebRXService {
                                     session.sendMessage(new ReceiverDetailsMessage(recvDetails));
                                     session.sendMessage(new ConfigMessage(new PrimaryServerConfig(config)));
                                     changeProfile(session);
+                                    session.sendMessage(new SecondaryConfigMessage(new SecondaryServerConfig(2048)));
                                     session.sendMessage(new FeaturesMessage(new Features(true)));
                                     session.sendMessage(new ModesMessage(getAvailableModes()));
                                     session.sendMessage(new ProfilesMessage(receivers.getProfiles()));
@@ -153,7 +158,6 @@ public class OpenWebRXService {
                                     message = ctx.messageAsClass(
                                             ClientMessageType.valueOf(type.toUpperCase()).getMessageClass());
                                 } catch (IllegalArgumentException e) {
-                                    log(ctx, "Unknown message received: {}", obj.toString());
                                     message = null;
                                 }
                                 if (message != null) {
@@ -164,6 +168,7 @@ public class OpenWebRXService {
                                 ctx.session.disconnect();
                             }
                         }
+                        System.out.println(ctx.message());
                     });
                     wcfg.onConnect(ctx -> sessionManager.add(ctx.sessionId(),
                             new ClientSession(ctx.sessionId(), ctx.session)));
@@ -172,10 +177,21 @@ public class OpenWebRXService {
         });
         this.recvDetails = recvDetails;
         this.config = config;
+
+        new Timer(true).scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                broadcastData((byte) 0x01, new byte[config.fftSize() * 4]);
+            }
+        }, 200, 200);
     }
 
     public void broadcastChatMessage(String from, String text, Color color) {
         sessionManager.broadcastMessage(new ChatMessage(from, text, toHex(color)));
+    }
+
+    public void broadcastData(byte id, byte[] data) {
+        sessionManager.broadcastData(id, data);
     }
 
     public Mode[] getAvailableModes() {

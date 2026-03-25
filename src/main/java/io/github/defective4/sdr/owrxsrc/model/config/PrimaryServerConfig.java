@@ -18,7 +18,9 @@ public record PrimaryServerConfig(@SerializedName("max_clients") int maxClients,
         @SerializedName("allow_center_freq_changes") boolean allowCenterFrequencyChanges,
         @SerializedName("modes_url") String modesURL, @SerializedName("audio_compression") String audioCompression,
         @SerializedName("receiver_gps") GPS gps, @SerializedName("waterfall_colors") int[] waterfallColors,
-        @SerializedName("waterfall_levels") Levels waterfallLevels) {
+        @SerializedName("waterfall_levels") Levels waterfallLevels,
+        @SerializedName("squelch_auto_margin") int squelchAutoMargin,
+        @SerializedName("waterfall_auto_level_default_mode") boolean waterfallAutoLevelsMode) {
 
     public PrimaryServerConfig(OWRXConfiguration config) {
         this(config.maxClients(), false, "https://www.vesselfinder.com/vessels/details/{}",
@@ -26,6 +28,6 @@ public record PrimaryServerConfig(@SerializedName("max_clients") int maxClients,
                 config.fftSize(), config.waterfallTheme(), config.tuningPrecision(), config.allowChat(),
                 "https://flightaware.com/live/flight/{}", config.allowCenterFrequencyChanges(),
                 "https://flightaware.com/live/modes/{}/redirect", config.audioCompression(), config.gps(),
-                config.waterfallColors(), config.waterfallLevels());
+                config.waterfallColors(), config.waterfallLevels(), 10, false);
     }
 }

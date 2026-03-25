@@ -1,6 +1,7 @@
 package io.github.defective4.sdr.owrxsrc.session;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -49,6 +50,10 @@ public class ClientSession {
 
     public boolean hasHandshakeCompleted() {
         return clientId != null && clientType != null;
+    }
+
+    public void sendData(byte[] data) throws IOException {
+        session.getRemote().sendBytes(ByteBuffer.wrap(data));
     }
 
     public void sendMessage(ServerMessage message) throws IOException {

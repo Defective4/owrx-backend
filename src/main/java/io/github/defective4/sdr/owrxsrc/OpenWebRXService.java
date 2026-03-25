@@ -5,11 +5,14 @@ import static io.javalin.http.HttpStatus.*;
 
 import java.awt.Color;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -179,9 +182,26 @@ public class OpenWebRXService {
         this.config = config;
 
         new Timer(true).scheduleAtFixedRate(new TimerTask() {
+
+            private final Random rand = new Random();
+
             @Override
             public void run() {
-                broadcastData((byte) 0x01, new byte[config.fftSize() * 4]);
+                float[] fft = new float[config.fftSize()];
+                float val = config.waterfallLevels().min();
+                boolean up = true;
+                for (int i = 0; i < fft.length; i++) {
+                    val += up ? 0.1 : -0.1;
+                    if (val >= config.waterfallLevels().max()) {
+                        up = false;
+                    }
+
+                    if (val <= config.waterfallLevels().min()) {
+                        up = true;
+                    }
+                    fft[i] = val;
+                }
+                broadcastFFT(fft);
             }
         }, 200, 200);
     }
@@ -192,6 +212,13 @@ public class OpenWebRXService {
 
     public void broadcastData(byte id, byte[] data) {
         sessionManager.broadcastData(id, data);
+    }
+
+    public void broadcastFFT(float[] fft) {
+        if (fft.length != config.fftSize()) return;
+        ByteBuffer fftBuffer = ByteBuffer.allocate(fft.length * 4).order(ByteOrder.LITTLE_ENDIAN);
+        for (float f : fft) fftBuffer.putFloat(f);
+        broadcastData((byte) 0x01, fftBuffer.array());
     }
 
     public Mode[] getAvailableModes() {

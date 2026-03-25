@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.slf4j.Logger;
 import org.slf4j.simple.SimpleLoggerFactory;
@@ -22,15 +23,19 @@ import io.github.defective4.sdr.owrxsrc.model.Features;
 import io.github.defective4.sdr.owrxsrc.model.Mode;
 import io.github.defective4.sdr.owrxsrc.model.Modulation;
 import io.github.defective4.sdr.owrxsrc.model.ReceiverDetails;
-import io.github.defective4.sdr.owrxsrc.model.ServerConfig;
 import io.github.defective4.sdr.owrxsrc.model.ServiceDetails;
 import io.github.defective4.sdr.owrxsrc.model.client.message.ClientMessageType;
+import io.github.defective4.sdr.owrxsrc.model.config.PrimaryServerConfig;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ChatMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ClientCountMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ConfigMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.FeaturesMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ModesMessage;
+import io.github.defective4.sdr.owrxsrc.model.server.message.ProfilesMessage;
 import io.github.defective4.sdr.owrxsrc.model.server.message.ReceiverDetailsMessage;
+import io.github.defective4.sdr.owrxsrc.sdr.Receiver;
+import io.github.defective4.sdr.owrxsrc.sdr.ReceiverBand;
+import io.github.defective4.sdr.owrxsrc.sdr.Receivers;
 import io.github.defective4.sdr.owrxsrc.session.ClientSession;
 import io.github.defective4.sdr.owrxsrc.session.ClientSessionManager;
 import io.github.defective4.sdr.owrxsrc.template.HTMLTemplateManager;
@@ -59,6 +64,7 @@ public class OpenWebRXService {
     private final Logger mainLogger = new SimpleLoggerFactory().getLogger("owrx-backend");
     private final String[] motd = { "Welcome to OWRX Backend!",
             "Check the code at https://github.com/Defective4/owrx-backend" };
+    private final Receivers receivers = new Receivers();
     private final ReceiverDetails recvDetails;
     private final ClientSessionManager sessionManager = new ClientSessionManager();
     private final HTMLTemplateManager templateManager = new HTMLTemplateManager();
@@ -122,9 +128,11 @@ public class OpenWebRXService {
                                     ctx.send(String.format(HS_SERVER_HEADER, HS_BRAND, version));
                                     log(ctx, "Connection received. Client ID: {}, Client Type: {}", clientId, type);
                                     session.sendMessage(new ReceiverDetailsMessage(recvDetails));
-                                    session.sendMessage(new ConfigMessage(new ServerConfig(config)));
+                                    session.sendMessage(new ConfigMessage(new PrimaryServerConfig(config)));
+                                    changeProfile(session);
                                     session.sendMessage(new FeaturesMessage(new Features(true)));
                                     session.sendMessage(new ModesMessage(getAvailableModes()));
+                                    session.sendMessage(new ProfilesMessage(receivers.getProfiles()));
                                     for (String line : motd) {
                                         session.sendMessage(new ChatMessage("owrx-backend", line, toHex(Color.green)));
                                     }
@@ -178,8 +186,23 @@ public class OpenWebRXService {
         return Arrays.asList(Modulation.values());
     }
 
+    public Receivers getReceivers() {
+        return receivers;
+    }
+
     public Javalin start(int port) {
         return javalin.start(port);
+    }
+
+    private void changeProfile(ClientSession session) throws IOException {
+        UUID receiverId = receivers.getSelectedReceiver();
+        Receiver receiver = receivers.getReceivers().get(receiverId);
+        if (receiver == null) return;
+        UUID bandId = receivers.getSelectedBand();
+        ReceiverBand receiverBand = receiver.getBands().get(bandId);
+        if (receiverBand == null) return;
+
+        session.sendMessage(new ConfigMessage(receiverBand.toConfig(bandId, Modulation.WFM.getMod(), receiverId)));
     }
 
     private void debug(WsMessageContext ctx, String message, String... args) {
